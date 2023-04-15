@@ -2,19 +2,18 @@ use bytes::Bytes;
 use hex::encode;
 use md5::{Digest, Md5};
 use std::error::Error;
-async fn get_object_from_range(range_string: String, client: &aws_sdk_s3::Client) -> Result<Bytes> {
-    return client
+async fn get_object_from_range(
+    range_string: String,
+    client: &aws_sdk_s3::Client,
+) -> Result<Bytes, Error> {
+    let object = client
         .get_object()
         .bucket("s3-md5-bucket")
         .key("test.jpg")
         .range(range_string)
         .send()
-        .await?
-        .body
-        .collect()
-        .await?
-        .into_bytes();
-    Ok(())
+        .await;
+    let bodyBytes = object.body.unwrap_or_else(|| Err("oops")).collect().await;
 }
 
 #[tokio::main]
